@@ -1,1 +1,13 @@
 @import 'tailwindcss';
+
+@theme {
+	/* Color Palette for Stellar UI */
+	--color-primary-200: oklch(0.7433 0.139 307.06) /* Quantum Purple #C393F0 */
+		--color-primary-500: oklch(0.5338 0.2503 301.37) /* Quantum Purple #8A2BE2 */
+		--color-primary-700: oklch(0.4077 0.1993 300.17) /* Quantum Purple #5e16a2 */
+		--color-dark-500: oklch(0.205 0.02 248.83) /* Deep Space Black #101820 */
+		--color-white-500: oklch(0.9702 0 0) /* Stellar White #F5F5F5 */
+		--color-success-500: oklch(0.7261 0.1215 192.76) /* Starship Teal (Success State) #17BEBB */
+		--color-warning-500: oklch(0.8735 0.1411 85.67) /* Warning Gold #FFCE5C */
+		--color-error-500: oklch(0.6368 0.2078 25.33) /* Critical/Error #EF4444 */;
+}
