@@ -12,10 +12,13 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"db:push": "drizzle-kit push",
-		"db:migrate": "drizzle-kit migrate",
+		"db:generate-prod": "drizzle-kit generate --config=drizzle-prod.drizzle.config",
+		"db:migrate-prod": "drizzle-kit migrate --config=drizzle-prod.drizzle.config",
+		"db:push-prod": "drizzle-kit push --config=drizzle-prod.drizzle.config",
+		"db:generate-dev": "drizzle-kit generate --config=drizzle-dev.drizzle.config",
+		"db:migrate-dev": "drizzle-kit migrate --config=drizzle-dev.drizzle.config",
+		"db:push-dev": "drizzle-kit push --config=drizzle-dev.drizzle.config",
 		"db:studio": "drizzle-kit studio",
-		"db:generate": "drizzle-kit generate:sqlite",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run"
 	},
@@ -25,10 +28,12 @@
 		"@sveltejs/adapter-node": "^5.2.12",
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
+		"@tailwindcss/forms": "^0.5.10",
 		"@tailwindcss/vite": "^4.0.0",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/svelte": "^5.2.4",
 		"@types/node": "^22",
+		"daisyui": "^5.0.43",
 		"drizzle-kit": "^0.30.2",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
@@ -53,6 +58,7 @@
 		"@oslojs/encoding": "^1.1.0",
 		"drizzle-orm": "^0.40.0",
 		"drizzle-zod": "^0.8.2",
+		"lucide-svelte": "^0.513.0",
 		"zod": "^3.25.51"
 	}
 }
