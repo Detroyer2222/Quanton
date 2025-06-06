@@ -135,13 +135,9 @@ export function validatePassword(password: unknown): password is string {
  * @param password The password to hash.
  * @returns
  */
-export async function generatePasswordHash(
-	password: string,
-	salt: Uint8Array<ArrayBufferLike>
-): Promise<string> {
+export async function generatePasswordHash(password: string): Promise<string> {
 	return hash(password, {
 		// recommended minimum parameters
-		salt,
 		memoryCost: 19456,
 		timeCost: 3,
 		outputLen: 32,
@@ -156,7 +152,8 @@ export async function generatePasswordHash(
  * @param hash The stored hash to compare against.
  * @returns A boolean indicating whether the password matches the hash.
  */
-export async function verifyPasswordHash(password: string, hash: string): Promise<boolean> {
+export function verifyPasswordHash(password: string, hash: string): Promise<boolean> {
+	// Use the verify function from Argon2 to check the password against the hash
 	return verify(password, hash, {
 		// recommended minimum parameters
 		memoryCost: 19456,
