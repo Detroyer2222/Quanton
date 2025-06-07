@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+	$inspect(form);
 </script>
 
 <section class="flex h-screen flex-col items-center justify-center">
@@ -15,56 +17,78 @@
 				</p>
 			</div>
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-				<div class="card-body">
+				<form class="card-body" action="?/register" method="post" use:enhance>
 					<fieldset class="fieldset flex flex-col space-y-2">
 						<legend class="fieldset-legend">Email</legend>
 						<input
-							class="input input-primary input-lg validator"
+							class="input input-lg"
+							class:input-primary={!form?.errors?.fieldErrors?.email}
+							class:input-error={form?.errors?.fieldErrors?.email}
 							type="email"
 							name="email"
+							value={(form?.data?.email as string) ?? ''}
 							placeholder="Enter your Email"
 							required
 						/>
 
-						<p class="label validator-hint hidden">
-							You can edit page title later on from settings
-						</p>
-					</fieldset>
-					<fieldset class="flex flex-col space-y-2">
-						<legend class="fieldset-legend">Confirm Password</legend>
-						<input
-							class="input input-primary input-lg validator"
-							type="password"
-							name="confirmPassword"
-							placeholder="Enter your Password"
-							required
-						/>
-
-						<p class="label validator-hint hidden">
-							You can edit page title later on from settings
-						</p>
+						{#if form?.errors?.fieldErrors?.email}
+							{#each form?.errors?.fieldErrors?.email as error}
+								<p class="label text-error text-wrap">
+									{error}
+								</p>
+							{/each}
+						{/if}
 					</fieldset>
 					<fieldset class="flex flex-col space-y-2">
 						<legend class="fieldset-legend">Password</legend>
 						<input
-							class="input input-primary input-lg validator"
+							class="input input-lg"
+							class:input-primary={!form?.errors?.fieldErrors?.password}
+							class:input-error={form?.errors?.fieldErrors?.password}
 							type="password"
 							name="password"
 							placeholder="Enter your Password"
 							required
 						/>
 
-						<p class="label validator-hint hidden">
-							You can edit page title later on from settings
-						</p>
+						{#if form?.errors?.fieldErrors?.password}
+							{#each form?.errors?.fieldErrors?.password as error}
+								<p class="label text-error text-wrap">
+									{error}
+								</p>
+							{/each}
+						{/if}
+					</fieldset>
+					<fieldset class="flex flex-col space-y-2">
+						<legend class="fieldset-legend">Confirm Password</legend>
+						<input
+							class="input input-lg"
+							class:input-primary={!form?.errors?.fieldErrors?.confirmPassword}
+							class:input-error={form?.errors?.fieldErrors?.confirmPassword}
+							type="password"
+							name="confirmPassword"
+							placeholder="Enter your Password"
+							required
+						/>
+
+						{#if form?.errors?.fieldErrors?.confirmPassword}
+							{#each form?.errors?.fieldErrors?.confirmPassword as error}
+								<p class="label text-error text-wrap">
+									{error}
+								</p>
+							{/each}
+						{/if}
 
 						<div class="flex flex-row justify-between">
-							<a href="/login" class="link link-hover">Already have an Account? Login now</a>
+							<a href="/login" class="link link-hover">
+								Already have an Account?
+								<br /> Login now
+							</a>
 							<a class="link link-hover">Forgot password?</a>
 						</div>
-						<button class="btn btn-neutral mt-4" type="submit">Login</button>
+						<button class="btn btn-neutral mt-4" type="submit">Register</button>
 					</fieldset>
-				</div>
+				</form>
 			</div>
 		</div>
 	</div>

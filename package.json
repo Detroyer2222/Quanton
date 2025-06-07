@@ -12,13 +12,14 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"db:generate-prod": "drizzle-kit generate --config=drizzle-prod.drizzle.config",
-		"db:migrate-prod": "drizzle-kit migrate --config=drizzle-prod.drizzle.config",
-		"db:push-prod": "drizzle-kit push --config=drizzle-prod.drizzle.config",
-		"db:generate-dev": "drizzle-kit generate --config=drizzle-dev.drizzle.config",
-		"db:migrate-dev": "drizzle-kit migrate --config=drizzle-dev.drizzle.config",
-		"db:push-dev": "drizzle-kit push --config=drizzle-dev.drizzle.config",
-		"db:studio": "drizzle-kit studio",
+		"db:generate-prod": "drizzle-kit generate --config=drizzle-prod.config.ts",
+		"db:migrate-prod": "drizzle-kit migrate --config=drizzle-prod.config.ts",
+		"db:push-prod": "drizzle-kit push --config=drizzle-prod.config.ts",
+		"db:studio-prod": "drizzle-kit studio --config=drizzle-prod.config.ts",
+		"db:generate-dev": "drizzle-kit generate --config=drizzle-dev.config.ts",
+		"db:migrate-dev": "drizzle-kit migrate --config=drizzle-dev.config.ts",
+		"db:push-dev": "drizzle-kit push --config=drizzle-dev.config.ts",
+		"db:studio-dev": "drizzle-kit studio --config=drizzle-dev.config.ts",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run"
 	},
@@ -59,6 +60,7 @@
 		"drizzle-orm": "^0.40.0",
 		"drizzle-zod": "^0.8.2",
 		"lucide-svelte": "^0.513.0",
+		"uuid": "^11.1.0",
 		"zod": "^3.25.51"
 	}
 }

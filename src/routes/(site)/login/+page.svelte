@@ -55,14 +55,15 @@
 							{#if form?.errors?.message}
 								<div role="alert" class="alert alert-error">
 									<CircleX />
-									<span>Error! Task failed successfully.</span>
+									<span>{form?.errors?.message}</span>
 								</div>
 							{/if}
 
 							<div class="flex flex-row justify-between">
-								<a href="/register" class="link link-hover"
-									>Don't have an Account? <br /> Register now</a
-								>
+								<a href="/register" class="link link-hover">
+									Don't have an Account? <br />
+									Register now
+								</a>
 								<a class="link link-hover">Forgot password?</a>
 							</div>
 							<button class="btn btn-neutral mt-4" type="submit">Login</button>

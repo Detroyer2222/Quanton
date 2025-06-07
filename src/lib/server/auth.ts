@@ -1,32 +1,92 @@
+/**
+ * @module auth
+ *
+ * Provides authentication utilities for session management, password hashing, and user identification.
+ *
+ * ## Features
+ * - Session creation, validation, renewal, and invalidation
+ * - Secure session token generation and cookie management
+ * - User ID generation (UUID v4)
+ * - Password hashing and verification using Argon2
+ *
+ * ## Functions
+ * - `createSession(event, userLogin)`: Creates a new session for a user, stores it in the database, and sets a session cookie.
+ * - `generateSessionToken()`: Generates a secure, random session token encoded in base64url.
+ * - `validateSessionToken(token)`: Validates a session token, checks for expiration, renews if necessary, and returns session/user info.
+ * - `invalidateSession(sessionId)`: Deletes a session from the database by its ID.
+ * - `setSessionTokenCookie(event, token, expiresAt)`: Sets the session token as a cookie in the response.
+ * - `deleteSessionTokenCookie(event)`: Deletes the session token cookie from the response.
+ * - `generateUserId()`: Generates a new UUID v4 string for user identification.
+ * - `generatePasswordHash(password)`: Hashes a password securely using Argon2.
+ * - `verifyPasswordHash(password, hash)`: Verifies a password against a stored Argon2 hash.
+ *
+ * ## Types
+ * - `SessionValidationResult`: The result type of `validateSessionToken`, containing session and user information.
+ *
+ * @remarks
+ * - Session tokens are hashed before storage for security.
+ * - Session expiration and renewal are handled automatically.
+ * - Password hashing uses recommended Argon2 parameters for security.
+ */
 import type { RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { sha256 } from '@oslojs/crypto/sha2';
-import { encodeBase64url, encodeHexLowerCase, encodeBase32LowerCase } from '@oslojs/encoding';
+import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { hash, verify } from '@node-rs/argon2';
+import { v4 as uuidv4 } from 'uuid';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
+const sessionCookieName = 'auth-session';
 
-export const sessionCookieName = 'auth-session';
+/**
+ * @description
+ * Creates a new session for a user and sets a session cookie.
+ * @param event The request event containing the cookies.
+ * @param userId The ID of the user for whom the session is being created.
+ * @returns An object indicating success or failure of session creation.
+ */
+export async function createSession(
+	event: RequestEvent,
+	userId: string
+): Promise<{ error: boolean; message: string }> {
+	const token = generateSessionToken();
 
-export function generateSessionToken() {
+	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+	const session: table.Session = {
+		id: sessionId,
+		userId: userId,
+		expiresAt: new Date(Date.now() + DAY_IN_MS * 30)
+	};
+
+	try {
+		await db.insert(table.session).values(session);
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	} catch (error) {
+		return {
+			error: true,
+			message: 'An error occurred while creating the session. Please try again later.'
+		};
+	}
+
+	setSessionTokenCookie(event, token, session.expiresAt);
+
+	return { error: false, message: 'Session created successfully.' };
+}
+
+function generateSessionToken() {
 	const bytes = crypto.getRandomValues(new Uint8Array(18));
 	const token = encodeBase64url(bytes);
 	return token;
 }
 
-export async function createSession(token: string, userId: string) {
-	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
-	const session: table.Session = {
-		id: sessionId,
-		userId,
-		expiresAt: new Date(Date.now() + DAY_IN_MS * 30)
-	};
-	await db.insert(table.session).values(session);
-	return session;
-}
-
+/**
+ * @description
+ * Validates a session token, checks for expiration, and renews if necessary.
+ * @param token The session token to validate.
+ * @returns An object containing the session and user information, or null if invalid.
+ */
 export async function validateSessionToken(token: string) {
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const [result] = await db
@@ -64,17 +124,27 @@ export async function validateSessionToken(token: string) {
 
 export type SessionValidationResult = Awaited<ReturnType<typeof validateSessionToken>>;
 
+/**
+ * @description
+ * Invalidates a session by deleting it from the database.
+ * @param sessionId The ID of the session to invalidate.
+ */
 export async function invalidateSession(sessionId: string) {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
 }
 
-export function setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date) {
+function setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date) {
 	event.cookies.set(sessionCookieName, token, {
 		expires: expiresAt,
 		path: '/'
 	});
 }
 
+/**
+ * @description
+ * Deletes the session token cookie from the response.
+ * @param event The request event containing the cookies.
+ */
 export function deleteSessionTokenCookie(event: RequestEvent) {
 	event.cookies.delete(sessionCookieName, {
 		path: '/'
@@ -83,50 +153,21 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 
 /**
  * @description
- * Generates a session token for user authentication.
- * @returns A new User ID with 120 bits of entropy, encoded in base32.
+ * Generates a new User ID.
+ * @returns A UUID v4 string representing the User ID.
  */
 export function generateUserId(): string {
-	// ID with 120 bits of entropy, or about the same as UUID v4.
-	const bytes = crypto.getRandomValues(new Uint8Array(15));
-	const id = encodeBase32LowerCase(bytes);
-	return id;
+	return uuidv4();
 }
 
 /**
  * @description
- * Validates a username based on specific criteria:
- * - Must be a string.
- * - Must be between 3 and 31 characters long.
- * - Must contain only alphanumeric characters (A-Z, a-z, 0-9).
- * @param username The username to validate.
- * @returns The username if it meets the criteria, otherwise false.
+ * Generates a random username in the format "user_<random_string>".
+ * @returns A string representing the generated username.
  */
-export function validateUsername(username: unknown): username is string {
-	return (
-		typeof username === 'string' &&
-		username.length >= 3 &&
-		username.length <= 31 &&
-		/^[A-Za-z0-9]+$/.test(username)
-	);
-}
-
-/**
- * @description
- * Validates a password based on specific criteria:
- * - Must be a string.
- * - Must be between 6 and 255 characters long.
- * - Must contain at least one uppercase letter, one lowercase letter, one digit, and one special character.
- * @param password The password to validate.
- * @returns The password if it meets the criteria, otherwise false.
- */
-export function validatePassword(password: unknown): password is string {
-	return (
-		typeof password === 'string' &&
-		password.length >= 6 &&
-		password.length <= 255 &&
-		/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)
-	);
+export function generateUsername(): string {
+	const randomString = Math.random().toString(36).substring(2, 10);
+	return `user_${randomString}`;
 }
 
 /**
@@ -161,24 +202,4 @@ export function verifyPasswordHash(password: string, hash: string): Promise<bool
 		outputLen: 32,
 		parallelism: 1
 	});
-}
-
-/**
- * @description
- * Validates an email address based on specific criteria:
- * - Must be a string.
- * - Must be between 3 and 255 characters long.
- * - Must match a standard email format.
- * @param email The email to validate.
- * @returns The email if it meets the criteria, otherwise false.
- */
-export function validateEmail(email: unknown): email is string {
-	return (
-		typeof email === 'string' &&
-		email.length >= 3 &&
-		email.length <= 255 &&
-		/[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/.test(
-			email
-		)
-	);
 }
