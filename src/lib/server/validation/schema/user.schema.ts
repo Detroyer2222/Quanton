@@ -1,9 +1,8 @@
-import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
 import { z } from 'zod/v4';
-import { db } from '../db';
 import * as table from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import * as auth from '$lib/server/auth';
+import { db } from '$lib/server/db';
 
 export const userRegisterSchema = z
 	.object({

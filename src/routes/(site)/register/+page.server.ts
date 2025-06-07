@@ -4,7 +4,7 @@ import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateFormData } from '$lib/server/validation/validation';
-import { userRegisterSchema, type UserRegister } from '$lib/server/validation/validationSchema';
+import { userRegisterSchema, type UserRegister } from '$lib/server/validation/schema/user.schema';
 
 export const load = (async (event) => {
 	if (event.locals.user) {

@@ -2,10 +2,10 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import * as auth from '$lib/server/auth';
 import { validateFormData } from '$lib/server/validation/validation';
-import { userLoginSchema, type UserLogin } from '$lib/server/validation/validationSchema';
 import { db } from '$lib/server/db';
 import { eq } from 'drizzle-orm';
 import * as table from '$lib/server/db/schema';
+import { userLoginSchema, type UserLogin } from '$lib/server/validation/schema/user.schema';
 
 export const load = (async (event) => {
 	if (event.locals.user) {
