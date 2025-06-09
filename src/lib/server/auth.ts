@@ -38,7 +38,7 @@ import { hash, verify } from '@node-rs/argon2';
 import { v4 as uuidv4 } from 'uuid';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
-const sessionCookieName = 'auth-session';
+export const sessionCookieName = 'auth-session';
 
 /**
  * @description
@@ -133,7 +133,7 @@ export async function invalidateSession(sessionId: string) {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
 }
 
-function setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date) {
+export function setSessionTokenCookie(event: RequestEvent, token: string, expiresAt: Date) {
 	event.cookies.set(sessionCookieName, token, {
 		expires: expiresAt,
 		path: '/'

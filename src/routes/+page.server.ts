@@ -5,6 +5,6 @@ export const load = (async (event) => {
 	if (event.locals.user) {
 		return redirect(303, '/dashboard');
 	} else {
-		return redirect(303, '/login');
+		redirect(303, '/home');
 	}
 }) satisfies PageServerLoad;

@@ -1,9 +1,8 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin "daisyui" {
-	themes:
-		silk --default,
-		dracula --prefersdark,
-		light,
-		dark;
+	themes: dracula --default;
 }
+
+/* silk --default,
+dracula --prefersdark */
