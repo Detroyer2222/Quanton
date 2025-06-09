@@ -58,10 +58,10 @@ export const userLoginSchema = z
 			if (!existingUser) {
 				return false;
 			}
-			const validPassword = await auth.verifyPasswordHash(
-				existingUser?.passwordHash,
-				data.password
-			);
+                        const validPassword = await auth.verifyPasswordHash(
+                                data.password,
+                                existingUser?.passwordHash
+                        );
 			return validPassword;
 		},
 		{
