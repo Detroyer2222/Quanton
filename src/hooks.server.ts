@@ -1,26 +1,34 @@
 import type { Handle } from '@sveltejs/kit';
-import * as auth from '$lib/server/auth.js';
+import PocketBase from 'pocketbase';
+import { PUBLIC_POCKETBASE_URL } from '$env/static/public';
+import { dev } from '$app/environment';
+import { Collections, type TypedPocketBase } from '$lib/types';
 
 const handleAuth: Handle = async ({ event, resolve }) => {
-	const sessionToken = event.cookies.get(auth.sessionCookieName);
+	event.locals.pb = new PocketBase(PUBLIC_POCKETBASE_URL) as TypedPocketBase;
 
-	if (!sessionToken) {
+	event.locals.pb.authStore.loadFromCookie(event.request.headers.get('cookie') || '');
+
+	try {
+		if (event.locals.pb.authStore.isValid) {
+			const user = await event.locals.pb.collection(Collections.Users).authRefresh();
+			event.locals.user = user.record;
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	} catch (_) {
+		event.locals.pb.authStore.clear();
 		event.locals.user = null;
-		event.locals.session = null;
-		return resolve(event);
 	}
 
-	const { session, user } = await auth.validateSessionToken(sessionToken);
+	const response = await resolve(event);
 
-	if (session) {
-		auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
-	} else {
-		auth.deleteSessionTokenCookie(event);
-	}
+	response.headers.set(
+		'set-cookie',
+		event.locals.pb.authStore.exportToCookie({ secure: dev ? false : true })
+	);
 
-	event.locals.user = user;
-	event.locals.session = session;
-	return resolve(event);
+	return response;
 };
 
 export const handle: Handle = handleAuth;

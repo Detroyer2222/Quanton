@@ -1,25 +1,18 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import * as auth from '$lib/server/auth';
 import { validateFormData } from '$lib/server/validation/validation';
-import { db } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
-import * as table from '$lib/server/db/schema';
-import { userLoginSchema, type UserLogin } from '$lib/server/validation/schema/user.schema';
+import { userLoginSchema, type UserLogin } from '$lib/server/validation/user.schema';
+import { Collections } from '$lib/types';
 
-export const load = (async (event) => {
-	if (event.locals.user) {
-		return redirect(303, '/dashboard');
-	}
-	return { data: {} };
+export const load = (async () => {
+	return {
+		data: {}
+	};
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
-	login: async (event) => {
-		const { formData, errors } = await validateFormData(
-			await event.request.formData(),
-			userLoginSchema
-		);
+	login: async ({ locals, request }) => {
+		const { formData, errors } = await validateFormData(await request.formData(), userLoginSchema);
 
 		if (errors) {
 			return fail(400, {
@@ -29,33 +22,29 @@ export const actions: Actions = {
 		}
 		const validatedData = formData as UserLogin;
 
-		const user = await db
-			.select()
-			.from(table.user)
-			.where(eq(table.user.email, validatedData.email))
-			.limit(1)
-			.then((results) => results[0]);
-
-		if (!user) {
-			return fail(400, {
-				data: formData,
-				errors: {
-					message: 'User not found.'
-				}
-			});
-		}
-
-		const { error, message } = await auth.createSession(event, user.id);
-		if (error) {
+		try {
+			await locals.pb
+				.collection(Collections.Users)
+				.authWithPassword(validatedData.email, validatedData.password);
+			if (!locals.pb.authStore.isValid) {
+				locals.pb.authStore.clear();
+				return fail(400, {
+					data: {},
+					errors: {
+						message: 'Invalid email or password.'
+					}
+				});
+			}
+		} catch (error) {
 			return fail(500, {
-				data: formData,
+				data: {},
 				errors: {
-					message: message
+					message: error instanceof Error ? error.message : 'An unexpected error occurred.'
 				}
 			});
 		}
 
 		// Redirect to the dashboard after successful login
-		return redirect(302, '/dashboard');
+		return redirect(302, 'app/dashboard');
 	}
 };

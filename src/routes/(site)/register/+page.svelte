@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
+	import { CircleX } from 'lucide-svelte';
 	import type { PageData, ActionData } from './$types';
+	import { toast } from 'svelte-sonner';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	$inspect(form);
@@ -17,7 +19,24 @@
 				</p>
 			</div>
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
-				<form class="card-body" action="?/register" method="post" use:enhance>
+				<form
+					class="card-body"
+					action="?/register"
+					method="post"
+					use:enhance={() => {
+						return async ({ result, update }) => {
+							switch (result.type) {
+								case 'error':
+									toast.error(
+										form?.errors?.message ||
+											'Registration failed. Please try again or contact support.'
+									);
+									await applyAction(result);
+									break;
+							}
+						};
+					}}
+				>
 					<fieldset class="fieldset flex flex-col space-y-2">
 						<legend class="fieldset-legend">Email</legend>
 						<input
@@ -33,6 +52,27 @@
 
 						{#if form?.errors?.fieldErrors?.email}
 							{#each form?.errors?.fieldErrors?.email as error}
+								<p class="label text-error text-wrap">
+									{error}
+								</p>
+							{/each}
+						{/if}
+					</fieldset>
+					<fieldset class="fieldset flex flex-col space-y-2">
+						<legend class="fieldset-legend">Username</legend>
+						<input
+							class="input input-lg"
+							class:input-primary={!form?.errors?.fieldErrors?.username}
+							class:input-error={form?.errors?.fieldErrors?.username}
+							type="text"
+							name="username"
+							value={(form?.data?.username as string) ?? ''}
+							placeholder="Enter your Uswername"
+							required
+						/>
+
+						{#if form?.errors?.fieldErrors?.username}
+							{#each form?.errors?.fieldErrors?.username as error}
 								<p class="label text-error text-wrap">
 									{error}
 								</p>
@@ -77,6 +117,13 @@
 									{error}
 								</p>
 							{/each}
+						{/if}
+
+						{#if form?.errors?.message}
+							<div role="alert" class="alert alert-error">
+								<CircleX />
+								<span>{form?.errors?.message}</span>
+							</div>
 						{/if}
 
 						<div class="flex flex-row justify-between">

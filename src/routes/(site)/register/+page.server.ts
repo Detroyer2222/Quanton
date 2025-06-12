@@ -1,25 +1,20 @@
 import type { PageServerLoad, Actions } from './$types';
-import * as auth from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import * as table from '$lib/server/db/schema';
 import { fail, redirect } from '@sveltejs/kit';
 import { validateFormData } from '$lib/server/validation/validation';
-import { userRegisterSchema, type UserRegister } from '$lib/server/validation/schema/user.schema';
+import { userRegisterSchema, type UserRegister } from '$lib/server/validation/user.schema';
+import { Collections } from '$lib/types';
 
-export const load = (async (event) => {
-	if (event.locals.user) {
-		return redirect(303, '/dashboard');
-	}
+export const load = (async () => {
 	return { data: {} };
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
-	register: async (event) => {
+	register: async ({ locals, request }) => {
+		console.log('Register action called');
 		const { formData, errors } = await validateFormData(
-			await event.request.formData(),
+			await request.formData(),
 			userRegisterSchema
 		);
-
 		console.log(errors);
 
 		if (errors) {
@@ -31,35 +26,31 @@ export const actions: Actions = {
 
 		const validatedData = formData as UserRegister;
 
-		const userId = auth.generateUserId();
-		const passwordHash = await auth.generatePasswordHash(validatedData.password);
-		const userName = auth.generateUsername();
 		try {
-			await db.insert(table.user).values({
-				id: userId,
+			console.log('Attempting to create user with data:', validatedData);
+			const result = await locals.pb.collection(Collections.Users).create({
 				email: validatedData.email,
-				username: userName,
-				passwordHash
+				username: validatedData.username,
+				password: validatedData.password,
+				passwordConfirm: validatedData.confirmPassword
 			});
-
-			const { error, message } = await auth.createSession(event, userId);
-			if (error) {
-				return fail(500, {
-					data: formData,
-					errors: {
-						message
-					}
-				});
-			}
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			console.log('User created successfully:', result);
+			const emailResult = await locals.pb
+				.collection(Collections.Users)
+				.requestVerification(validatedData.email);
+			console.log('Verification email sent:', emailResult);
 		} catch (error) {
 			return fail(500, {
 				data: formData,
 				errors: {
-					message: 'An error has occurred while registering the user. Please contact support.'
+					message:
+						error instanceof Error
+							? error.message
+							: 'An error has occurred while registering the user. Please contact support.'
 				}
 			});
 		}
-		return redirect(302, '/dashboard');
+
+		throw redirect(303, '/login?registered=true');
 	}
 };
