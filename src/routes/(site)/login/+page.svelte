@@ -1,9 +1,23 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { CircleX } from 'lucide-svelte';
+	import { CircleX, Mail } from 'lucide-svelte';
 	import type { PageData, ActionData } from './$types';
+	import { superForm } from 'sveltekit-superforms';
+	import { toast } from 'svelte-sonner';
+	import { onMount } from 'svelte';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData; form: ActionData } = $props();
+
+	const { form, errors, enhance, capture, restore } = superForm(data.form);
+	export const snapshot = { capture, restore };
+
+	// Show email change notification when redirected from logout
+	onMount(() => {
+		if (data.emailChangeRequested) {
+			toast.success(
+				'Email change request sent! Please check your new email to confirm the change.'
+			);
+		}
+	});
 </script>
 
 <section class="flex h-screen flex-col items-center justify-center">
@@ -14,6 +28,16 @@
 			</div>
 			<div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
 				<div class="card-body">
+					{#if data.emailChangeRequested}
+						<div role="alert" class="alert alert-info mb-4">
+							<Mail class="h-6 w-6" />
+							<div>
+								<h3 class="font-bold">Email Change Requested</h3>
+								<div class="text-xs">Please check your new email to confirm the change.</div>
+							</div>
+						</div>
+					{/if}
+
 					<form action="?/login" method="post" use:enhance>
 						<fieldset class="fieldset flex flex-col space-y-2">
 							<legend class="fieldset-legend">Email</legend>
@@ -22,13 +46,13 @@
 								type="email"
 								name="email"
 								placeholder="Enter your Email"
-								value={(form?.data?.email as string) ?? ''}
+								bind:value={$form.email}
 								required
 							/>
 
-							{#if form?.errors?.email}
-								{#each form?.errors?.email as error}
-									<p class="label validator-hint">
+							{#if $errors.email}
+								{#each $errors.email as error}
+									<p class="label text-error text-wrap">
 										{error}
 									</p>
 								{/each}
@@ -41,22 +65,25 @@
 								type="password"
 								name="password"
 								placeholder="Enter your Password"
+								bind:value={$form.password}
 								required
 							/>
 
-							{#if form?.errors?.password}
-								{#each form?.errors?.password as error}
-									<p class="label validator-hint">
+							{#if $errors.password}
+								{#each $errors.password as error}
+									<p class="label text-error text-wrap">
 										{error}
 									</p>
 								{/each}
 							{/if}
 
-							{#if form?.errors?.message}
-								<div role="alert" class="alert alert-error">
-									<CircleX />
-									<span>{form?.errors?.message}</span>
-								</div>
+							{#if $errors?._errors}
+								{#each $errors?._errors as error}
+									<div role="alert" class="alert alert-error">
+										<CircleX />
+										<span>{error}</span>
+									</div>
+								{/each}
 							{/if}
 
 							<div class="flex flex-row justify-between">
@@ -64,7 +91,7 @@
 									Don't have an Account? <br />
 									Register now
 								</a>
-								<a class="link link-hover">Forgot password?</a>
+								<a class="link link-hover" href="/reset-password">Forgot password?</a>
 							</div>
 							<button class="btn btn-neutral mt-4" type="submit">Login</button>
 						</fieldset>

@@ -1,47 +1,50 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { validateFormData } from '$lib/server/validation/validation';
-import { userLoginSchema, type UserLogin } from '$lib/server/validation/user.schema';
+import { userLoginSchema } from '$lib/server/validation/user.schema';
 import { Collections } from '$lib/types';
+import { message, superValidate } from 'sveltekit-superforms';
+import { zod4 } from 'sveltekit-superforms/adapters';
 
-export const load = (async () => {
+export const load = (async ({ url }) => {
+	const form = await superValidate(zod4(userLoginSchema));
+	const emailChangeRequested = url.searchParams.get('emailChangeRequested') === 'true';
+	
 	return {
-		data: {}
+		data: {},
+		form,
+		emailChangeRequested
 	};
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
 	login: async ({ locals, request }) => {
-		const { formData, errors } = await validateFormData(await request.formData(), userLoginSchema);
+		const form = await superValidate(request, zod4(userLoginSchema));
+		console.log(form);
 
-		if (errors) {
+		if (!form.valid) {
 			return fail(400, {
-				data: formData,
-				errors
+				form
 			});
 		}
-		const validatedData = formData as UserLogin;
 
 		try {
 			await locals.pb
 				.collection(Collections.Users)
-				.authWithPassword(validatedData.email, validatedData.password);
+				.authWithPassword(form.data.email, form.data.password);
 			if (!locals.pb.authStore.isValid) {
 				locals.pb.authStore.clear();
-				return fail(400, {
-					data: {},
-					errors: {
-						message: 'Invalid email or password.'
-					}
+				return message(form, 'Invalid email or password.', {
+					status: 400
 				});
 			}
 		} catch (error) {
-			return fail(500, {
-				data: {},
-				errors: {
-					message: error instanceof Error ? error.message : 'An unexpected error occurred.'
+			return message(
+				form,
+				error + '\n An error occurred while logging in. Please try again or contact support.',
+				{
+					status: 500
 				}
-			});
+			);
 		}
 
 		// Redirect to the dashboard after successful login
