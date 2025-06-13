@@ -1,15 +1,12 @@
 <script lang="ts">
-	import { applyAction, enhance } from '$app/forms';
-	import { Info, User } from 'lucide-svelte';
+	import { User } from 'lucide-svelte';
 	import type { ActionData, PageData } from './$types';
 	import { toast } from 'svelte-sonner';
-	import { superForm } from 'sveltekit-superforms';
+	import { fileProxy, superForm } from 'sveltekit-superforms';
 	import { getImageUrl } from '$lib/pocketbase/utils';
 	import { Collections } from '$lib/types';
-	import { goto } from '$app/navigation';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
-
+	let { data }: { data: PageData } = $props();
 	const {
 		form: avatarForm,
 		errors: avatarErrors,
@@ -18,6 +15,7 @@
 		restore: avatarRestore,
 		delayed: avatarDelayed
 	} = superForm(data.avatarForm, {
+		dataType: 'json',
 		onError({ result }) {
 			toast.error(result.error.message || 'Failed to update avatar. Please try again.');
 		},
@@ -27,6 +25,7 @@
 			}
 		}
 	});
+	const avatarFile = fileProxy(avatarForm, 'avatar');
 	let fileInput: HTMLInputElement | null = null;
 	function openFileInput() {
 		if (fileInput) {
@@ -109,7 +108,7 @@
 						class="file-input"
 						name="avatar"
 						accept=".png,.jpg,.jpeg, .webp"
-						oninput={(e) => ($avatarForm.avatar = e.currentTarget.files?.item(0) as File)}
+						bind:files={$avatarFile}
 						bind:this={fileInput}
 					/>
 					<p class="label">PNG, JPEG, WEBP(144x144px)</p>

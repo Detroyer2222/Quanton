@@ -87,11 +87,13 @@ export const actions: Actions = {
 					status: 401
 				});
 			}
+			console.log('Form data:', form.data);
 			const response: UsersResponse = await locals.pb
 				.collection(Collections.Users)
 				.update<UsersResponse>(locals.user.id, {
 					avatar: form.data.avatar
 				});
+			console.log('Response from PocketBase:', response);
 
 			if (!response) {
 				return message(form, 'Failed to update avatar. Please try again later.', {
@@ -99,12 +101,7 @@ export const actions: Actions = {
 				});
 			}
 			locals.user.avatar = response.avatar;
-			return {
-				status: 200,
-				data: {
-					message: 'Avatar updated successfully.'
-				}
-			};
+			return message(form, 'Avatar updated successfully.');
 		} catch (error) {
 			return message(
 				form,
