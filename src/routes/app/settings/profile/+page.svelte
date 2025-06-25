@@ -3,7 +3,7 @@
 	import type { ActionData, PageData } from './$types';
 	import { toast } from 'svelte-sonner';
 	import { fileProxy, superForm } from 'sveltekit-superforms';
-	import { getImageUrl } from '$lib/pocketbase/utils';
+	import { getImageUrl } from '$lib/pocketbase/functions/utils';
 	import { Collections } from '$lib/types';
 
 	let { data }: { data: PageData } = $props();
@@ -83,24 +83,25 @@
 		>
 			<legend class="fieldset-legend">Change User Avatar</legend>
 			<div class="flex flex-row space-x-4">
-				{#if imageLoadError}
-					<button
-						type="button"
-						class="skeleton flex h-36 w-36 cursor-pointer items-center justify-center"
-						onclick={openFileInput}
-						aria-label="Click to upload avatar"
-					>
-						<User class=" h-26 w-26" />
-					</button>
-				{:else}
-					<img
-						src={getImageUrl(Collections.Users, data.user.id, data.user.avatar, '144x144')}
-						alt="UserAvatar"
-						class="h-36 w-36"
-						loading="lazy"
-						onerror={() => (imageLoadError = true)}
-					/>
-				{/if}
+				<button
+					class="flex h-36 w-36 cursor-pointer items-center justify-center"
+					onclick={openFileInput}
+					aria-label="Click to upload avatar"
+				>
+					{#if imageLoadError}
+						<div class="skeleton flex h-36 w-36 items-center justify-center">
+							<User class=" h-26 w-26" />
+						</div>
+					{:else}
+						<img
+							src={getImageUrl(Collections.Users, data.user.id, data.user.avatar, '144x144')}
+							alt="UserAvatar"
+							class="h-36 w-36"
+							loading="lazy"
+							onerror={() => (imageLoadError = true)}
+						/>
+					{/if}
+				</button>
 
 				<div class="w-2/5 self-end">
 					<input

@@ -8,7 +8,29 @@ export const userRegisterSchema = z
 		username: z
 			.string({ error: 'Username is required.' })
 			.min(3, 'Username must be at least 3 characters.')
-			.max(50, 'Username must be at most 50 characters.'),
+			.max(50, 'Username must be at most 50 characters.')
+			.refine(
+				async (username) => {
+					try {
+						const pb = await authenticatePocketbase();
+						const existingUser = await pb.collection(Collections.Users).getFullList({
+							filter: `username = "${username}"`
+						});
+						// Check for unknown
+						if (existingUser[0]) {
+							console.log('Username is already taken:', username);
+							return false; // Username is taken
+						} else {
+							console.log('Username is available:', username);
+							return true;
+						}
+					} catch (error) {
+						console.error('Error checking username availability:', error);
+						return false; // If there's an error, treat it as unavailable
+					}
+				},
+				{ error: 'Username already taken.', abort: true }
+			),
 		password: z
 			.string({ error: 'Password is required.' })
 			.min(8, 'Password must be at least 8 characters.')

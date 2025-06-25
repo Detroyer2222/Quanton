@@ -3,13 +3,13 @@
 	import type { LayoutData } from './$types';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { User } from 'lucide-svelte';
-	import { getImageUrl } from '$lib/pocketbase/utils';
+	import { getImageUrl } from '$lib/pocketbase/functions/utils';
 	import { Collections } from '$lib/types';
 
 	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 	const links = [
-		{ href: 'dashboard', label: 'Dashboard' },
-		{ href: 'organization', label: 'Organization' }
+		{ href: '/dashboard', label: 'Dashboard' },
+		{ href: '/organization', label: 'Organization' }
 	];
 	$inspect(data);
 	let imageLoadError = $state(false);

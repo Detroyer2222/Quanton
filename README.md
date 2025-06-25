@@ -17,12 +17,13 @@ Quanton is in its early stages of development. The website interface and Turso d
 ## Tech Stack
 
 - **Frontend**: [SvelteKit](https://kit.svelte.dev/) for a modern, reactive, and fast user interface.
-- **Database**: [Turso](https://turso.tech/) for managing data and authentication.
+- **Database**: [Pocketbase](https://pocketbase.io/) for managing data and authentication.
 - **Hosting**: Self-hosted on a VPS, managed with [Coolify](https://coolify.io/).
 
 ## How to Use (Development Environment)
 
 ### Important currently no Contributions are accepted!
+
 How to develop and contribute to the project is currently a WIP. This is just a boiler plate text.
 There will be contributions accepted in the future.
 
@@ -76,4 +77,3 @@ This project is licensed under the [GNU Affero General Public License](LICENSE).
 ---
 
 Let’s build the ultimate Star Citizen organization management tool together. Fly safe!
-

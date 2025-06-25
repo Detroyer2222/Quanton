@@ -26,8 +26,9 @@
 </script>
 
 <Toaster position="top-right" richColors theme="dark" />
-<div>
-	{@render children()}
+<div class="flex min-h-screen flex-col">
+	<main class="flex-1">
+		{@render children()}
+	</main>
+	<Footer />
 </div>
-
-<Footer />
